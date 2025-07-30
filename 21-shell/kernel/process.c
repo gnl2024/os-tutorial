@@ -2,6 +2,8 @@
 #include "../libc/mem.h"
 #include "../libc/string.h"
 #include "../drivers/screen.h"
+#include "../cpu/gdt.h"
+#include "memory.h"
 
 #define NULL ((void*)0)
 
@@ -51,7 +53,21 @@ process_t *create_process(void (*entry_point)(void), void *stack, int privileges
     proc->regs.ebp = proc->regs.esp;
     proc->regs.eflags = 0x202;  // Interrupts enabled
     
-    // Set segment registers
+    // Allocate memory regions for process
+    u32 heap_start = (u32)proc->heap;
+    allocate_memory_region(heap_start, 0x1000, 
+                          PERMISSION_READ | PERMISSION_WRITE, 
+                          proc->pid, MEMORY_TYPE_HEAP);
+    
+    u32 stack_start = (u32)proc->stack;
+    allocate_memory_region(stack_start, 0x1000, 
+                          PERMISSION_READ | PERMISSION_WRITE, 
+                          proc->pid, MEMORY_TYPE_STACK);
+    
+    // Setup process-specific GDT segments
+    setup_process_segments(proc);
+    
+    // Set segment registers based on process segments
     if (privileges == PRIVILEGE_KERNEL) {
         proc->regs.cs = 0x08;  // Kernel code segment
         proc->regs.ds = 0x10;  // Kernel data segment
@@ -60,12 +76,12 @@ process_t *create_process(void (*entry_point)(void), void *stack, int privileges
         proc->regs.gs = 0x10;
         proc->regs.ss = 0x10;
     } else {
-        proc->regs.cs = 0x18;  // User code segment
-        proc->regs.ds = 0x20;  // User data segment
-        proc->regs.es = 0x20;
-        proc->regs.fs = 0x20;
-        proc->regs.gs = 0x20;
-        proc->regs.ss = 0x20;
+        proc->regs.cs = proc->code_segment;  // Process-specific code segment
+        proc->regs.ds = proc->data_segment;  // Process-specific data segment
+        proc->regs.es = proc->data_segment;
+        proc->regs.fs = proc->data_segment;
+        proc->regs.gs = proc->data_segment;
+        proc->regs.ss = proc->data_segment;
     }
     
     kprint("Created process PID: ");

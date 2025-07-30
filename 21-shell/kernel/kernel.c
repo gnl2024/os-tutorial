@@ -2,6 +2,7 @@
 #include "../drivers/screen.h"
 #include "kernel.h"
 #include "process.h"
+#include "memory.h"
 #include "../libc/string.h"
 #include "../libc/mem.h"
 
@@ -19,11 +20,14 @@ void main() {
     isr_install();
     irq_install();
 
+    // Initialize memory regions
+    init_memory_regions();
+    
     // Initialize process manager
     init_process_manager();
 
     kprint("Hello from kernel!\n");
-    kprint("System initialized with process management!\n");
+    kprint("System initialized with process management and memory protection!\n");
     
     // Test memory allocator
     u32 phys_addr;
