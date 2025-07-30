@@ -54,3 +54,10 @@ int strcmp(char s1[], char s2[]) {
     }
     return s1[i] - s2[i];
 }
+
+void memset(void *ptr, int value, int size) {
+    unsigned char *p = (unsigned char *)ptr;
+    for (int i = 0; i < size; i++) {
+        p[i] = (unsigned char)value;
+    }
+}

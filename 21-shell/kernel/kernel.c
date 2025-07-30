@@ -1,16 +1,29 @@
 #include "../cpu/isr.h"
 #include "../drivers/screen.h"
 #include "kernel.h"
+#include "process.h"
 #include "../libc/string.h"
 #include "../libc/mem.h"
+
+// Test process function
+void test_process_function(void) {
+    kprint("Test process running! PID: ");
+    char pid_str[10];
+    int_to_ascii(get_current_pid(), pid_str);
+    kprint(pid_str);
+    kprint("\n");
+}
 
 void main() {
     // Initialize interrupts
     isr_install();
     irq_install();
 
+    // Initialize process manager
+    init_process_manager();
+
     kprint("Hello from kernel!\n");
-    kprint("System initialized with memory allocator!\n");
+    kprint("System initialized with process management!\n");
     
     // Test memory allocator
     u32 phys_addr;
@@ -26,6 +39,22 @@ void main() {
     int_to_ascii(mem2, addr_str);
     kprint(addr_str);
     kprint("\n");
+    
+    // Test process creation
+    kprint("Creating test process...\n");
+    void *test_stack = (void*)0x30000;  // Test process stack
+    process_t *test_proc = create_process(test_process_function, test_stack, PRIVILEGE_USER);
+    
+    if (test_proc) {
+        kprint("Test process created successfully!\n");
+        kprint("Current process PID: ");
+        char pid_str[10];
+        int_to_ascii(get_current_pid(), pid_str);
+        kprint(pid_str);
+        kprint("\n");
+    } else {
+        kprint("Failed to create test process!\n");
+    }
     
     kprint("Type something, it will go through the kernel\n"
         "Type END to halt the CPU\n> ");
