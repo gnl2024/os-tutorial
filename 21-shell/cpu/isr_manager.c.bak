@@ -1,0 +1,83 @@
+#include "isr_manager.h"
+#include "../cpu/types.h"
+#include "../drivers/screen.h"
+#include "../libc/string.h"
+
+// ISR handler function pointer type
+typedef void (*isr_handler_t)(u32 interrupt_number, u32 error_code);
+
+// Array of ISR handlers
+static isr_handler_t isr_handlers[256] = {0};
+
+// Default ISR handler
+static void default_isr_handler(u32 interrupt_number, u32 error_code) {
+    (void)error_code; // Suppress unused parameter warning
+    char message[100];
+    kprint("Unhandled interrupt: ");
+    int_to_ascii(interrupt_number, message);
+    kprint(message);
+    kprint("\n");
+}
+
+// Register an ISR handler
+void register_isr_handler(u8 interrupt_number, isr_handler_t handler) {
+    isr_handlers[interrupt_number] = handler;
+}
+
+// Get ISR handler
+isr_handler_t get_isr_handler(u8 interrupt_number) {
+    if (isr_handlers[interrupt_number] != 0) {
+        return isr_handlers[interrupt_number];
+    }
+    return default_isr_handler;
+}
+
+// Initialize ISR manager
+void isr_manager_init() {
+    // Set all handlers to default
+    for (int i = 0; i < 256; i++) {
+        isr_handlers[i] = default_isr_handler;
+    }
+}
+
+// C function called from assembly stub
+void isr_dispatcher(u32 interrupt_number, u32 error_code) {
+    isr_handler_t handler = get_isr_handler(interrupt_number);
+    handler(interrupt_number, error_code);
+}
+
+// IRQ dispatcher
+void irq_dispatcher(u32 irq_number) {
+    // Convert IRQ number to interrupt number (IRQs start at 32)
+    u32 interrupt_number = irq_number + 32;
+    isr_dispatcher(interrupt_number, 0);
+}
+
+// External keyboard callback function
+extern void keyboard_callback(u32 interrupt_number, u32 error_code);
+
+// Specific ISR handlers
+void timer_isr_handler(u32 interrupt_number, u32 error_code) {
+    (void)interrupt_number; // Suppress unused parameter warning
+    (void)error_code; // Suppress unused parameter warning
+    // Timer interrupt handling
+    kprint("Timer tick\n");
+}
+
+void keyboard_isr_handler(u32 interrupt_number, u32 error_code) {
+    // Debug output
+    kprint("Keyboard ISR called! Interrupt: ");
+    char s[10];
+    int_to_ascii(interrupt_number, s);
+    kprint(s);
+    kprint("\n");
+    
+    // Call the actual keyboard handler
+    keyboard_callback(interrupt_number, error_code);
+}
+
+// Initialize specific handlers
+void init_specific_handlers() {
+    register_isr_handler(32, timer_isr_handler);      // IRQ 0 (Timer)
+    register_isr_handler(33, keyboard_isr_handler);   // IRQ 1 (Keyboard)
+} 

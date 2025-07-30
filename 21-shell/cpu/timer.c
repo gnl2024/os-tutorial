@@ -2,11 +2,21 @@
 #include "isr.h"
 #include "ports.h"
 #include "../libc/function.h"
+#include "../drivers/screen.h"
+#include "../libc/string.h"
 
 u32 tick = 0;
 
 static void timer_callback(registers_t regs) {
     tick++;
+    // Debug: print tick every 50 ticks to avoid spam
+    if (tick % 50 == 0) {
+        kprint("Timer tick: ");
+        char s[10];
+        int_to_ascii(tick, s);
+        kprint(s);
+        kprint("\n");
+    }
     UNUSED(regs);
 }
 

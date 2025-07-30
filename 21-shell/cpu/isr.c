@@ -5,6 +5,7 @@
 #include "../libc/string.h"
 #include "timer.h"
 #include "ports.h"
+#include "isr_manager.h"
 
 isr_t interrupt_handlers[256];
 
@@ -144,10 +145,15 @@ void irq_handler(registers_t r) {
 }
 
 void irq_install() {
+    /* Mask IRQ 0 (timer) in PIC to prevent timer interrupts */
+    u8 mask = port_byte_in(0x21); /* Read current mask */
+    mask |= 0x01; /* Set bit 0 to mask IRQ 0 */
+    port_byte_out(0x21, mask); /* Write back mask */
+    
     /* Enable interruptions */
     asm volatile("sti");
-    /* IRQ0: timer */
-    init_timer(50);
+    /* IRQ0: timer - temporarily disabled */
+    // init_timer(50);
     /* IRQ1: keyboard */
     init_keyboard();
 }
