@@ -15,15 +15,15 @@ void init_memory_regions(void) {
     // Allocate kernel memory regions
     allocate_memory_region(0x00000000, 0x00010000, 
                           PERMISSION_READ | PERMISSION_WRITE | PERMISSION_EXECUTE, 
-                          0, MEMORY_TYPE_CODE);  // Kernel code
+                          0, MEMORY_TYPE_CODE);  // Kernel code (0x00000000-0x00010000)
     
     allocate_memory_region(0x00010000, 0x00010000, 
                           PERMISSION_READ | PERMISSION_WRITE, 
-                          0, MEMORY_TYPE_STACK);  // Kernel stack
+                          0, MEMORY_TYPE_STACK);  // Kernel stack (0x00010000-0x00020000)
     
     allocate_memory_region(0x00020000, 0x00010000, 
                           PERMISSION_READ | PERMISSION_WRITE, 
-                          0, MEMORY_TYPE_HEAP);  // Kernel heap
+                          0, MEMORY_TYPE_HEAP);  // Kernel heap (0x00020000-0x00030000)
     
     kprint("Memory regions initialized\n");
 }
@@ -89,6 +89,14 @@ int check_memory_access(u32 address, int process_id, int access_type) {
     
     // Access denied - no region found
     return 0;
+}
+
+// Trigger a page fault for memory access violation
+void trigger_page_fault(u32 address) {
+    // This will cause a page fault by accessing invalid memory
+    // The page fault handler will catch this and handle it appropriately
+    volatile u32 *ptr = (u32*)address;
+    *ptr = 0; // This will trigger a page fault if address is invalid
 }
 
 // Find memory region by address

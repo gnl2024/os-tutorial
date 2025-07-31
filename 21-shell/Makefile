@@ -26,6 +26,19 @@ kernel.elf: boot/kernel_entry.o ${OBJ}
 run: os-image.bin
 	qemu-system-i386 -fda os-image.bin
 
+# Optimized run scripts
+run-optimized: os-image.bin
+	chmod +x run_qemu_optimized.sh && ./run_qemu_optimized.sh
+
+run-debug: os-image.bin kernel.elf
+	chmod +x run_qemu_debug.sh && ./run_qemu_debug.sh
+
+debug: os-image.bin kernel.elf
+	chmod +x debug_qemu.sh && ./debug_qemu.sh
+
+dev: os-image.bin
+	chmod +x dev_run.sh && ./dev_run.sh
+
 # Open the connection to qemu and load our kernel-object file with symbols
 debug: os-image.bin kernel.elf
 	qemu-system-i386 -s -fda os-image.bin -d guest_errors,int &

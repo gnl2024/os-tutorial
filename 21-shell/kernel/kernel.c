@@ -3,6 +3,10 @@
 #include "kernel.h"
 #include "process.h"
 #include "memory.h"
+#include "mpu.h"
+#include "../cpu/segment_protection.h"
+#include "privilege.h"
+#include "syscalls.h"
 #include "../libc/string.h"
 #include "../libc/mem.h"
 
@@ -20,9 +24,21 @@ void main() {
     isr_install();
     irq_install();
 
-    // Initialize memory regions
+        // Initialize memory regions
     init_memory_regions();
-    
+
+    // Initialize MPU
+    init_mpu();
+
+    // Initialize segment protection
+    init_segment_protection();
+
+    // Initialize privilege manager
+    init_privilege_manager();
+
+    // Initialize system call interface
+    init_syscall_interface();
+
     // Initialize process manager
     init_process_manager();
 

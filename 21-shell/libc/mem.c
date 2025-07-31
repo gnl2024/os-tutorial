@@ -15,7 +15,7 @@ void memory_set(u8 *dest, u8 val, u32 len) {
 /* This should be computed at link time, but a hardcoded
  * value is fine for now. Remember that our kernel starts
  * at 0x1000 as defined on the Makefile */
-u32 free_mem_addr = 0x10000;
+u32 free_mem_addr = 0x30000;  /* Start after kernel regions */
 
 /* Implementation is just a pointer to some free memory which
  * keeps growing */

@@ -1,4 +1,5 @@
 #include "gdt.h"
+#include "segment_protection.h"
 #include "../cpu/types.h"
 #include "../drivers/screen.h"
 #include "../libc/string.h"
@@ -80,6 +81,17 @@ void setup_process_segments(process_t *proc) {
     proc->code_segment = segment_index * 8;
     proc->data_segment = (segment_index + 1) * 8;
     
+    // Allocate segment protections for process segments
+    u8 privilege = (proc->privileges == PRIVILEGE_KERNEL) ? PRIVILEGE_RING_0 : PRIVILEGE_RING_3;
+    
+    // Code segment protection
+    allocate_segment_protection(proc->code_segment, (u32)proc->heap, 0x1000, 
+                               privilege, SEGMENT_PERMISSION_READ | SEGMENT_PERMISSION_EXECUTE);
+    
+    // Data segment protection
+    allocate_segment_protection(proc->data_segment, (u32)proc->heap, 0x1000, 
+                               privilege, SEGMENT_PERMISSION_READ | SEGMENT_PERMISSION_WRITE);
+    
     kprint("Process segments created: Code=");
     char seg_str[10];
     int_to_ascii(proc->code_segment, seg_str);
@@ -87,7 +99,10 @@ void setup_process_segments(process_t *proc) {
     kprint(" Data=");
     int_to_ascii(proc->data_segment, seg_str);
     kprint(seg_str);
-    kprint("\n");
+    kprint(" (Privilege: ");
+    int_to_ascii(privilege, seg_str);
+    kprint(seg_str);
+    kprint(")\n");
 }
 
 // Assign process segments (for existing processes)

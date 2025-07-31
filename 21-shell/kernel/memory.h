@@ -35,6 +35,7 @@ extern int region_count;
 // Function declarations
 int allocate_memory_region(u32 start, u32 size, int permissions, int process_id, int type);
 int check_memory_access(u32 address, int process_id, int access_type);
+void trigger_page_fault(u32 address);
 void free_memory_region(int region_id);
 int find_memory_region(u32 address);
 void init_memory_regions(void);

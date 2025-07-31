@@ -6,8 +6,14 @@
 #include "timer.h"
 #include "ports.h"
 #include "isr_manager.h"
+#include "../kernel/memory.h"
+#include "../kernel/process.h"
+#include "../kernel/mpu.h"
 
 isr_t interrupt_handlers[256];
+
+// Function declarations
+void page_fault_handler(registers_t r);
 
 /* Can't do this with a loop because we need the address
  * of the function names */
@@ -28,6 +34,9 @@ void isr_install() {
     set_idt_gate(13, (u32)isr13);
     set_idt_gate(14, (u32)isr14);
     set_idt_gate(15, (u32)isr15);
+    
+    // Register page fault handler
+    register_interrupt_handler(14, page_fault_handler);
     set_idt_gate(16, (u32)isr16);
     set_idt_gate(17, (u32)isr17);
     set_idt_gate(18, (u32)isr18);
@@ -125,6 +134,62 @@ void isr_handler(registers_t r) {
     kprint("\n");
     kprint(exception_messages[r.int_no]);
     kprint("\n");
+}
+
+// Page fault handler (interrupt 14)
+void page_fault_handler(registers_t r) {
+    (void)r; // Suppress unused parameter warning
+    u32 fault_address;
+    asm volatile("mov %%cr2, %0" : "=r" (fault_address));
+    
+    kprint("Page Fault! ( ");
+    char addr_str[10];
+    int_to_ascii(fault_address, addr_str);
+    kprint(addr_str);
+    kprint(" )\n");
+    
+    // Check if this is a memory access violation
+    int current_pid = get_current_pid();
+    if (current_pid >= 0) {
+        // First check MPU regions (hardware-like protection)
+        int mpu_region_id = find_mpu_region(fault_address);
+        if (mpu_region_id != -1) {
+            // Address is in MPU region, check permissions
+            mpu_region_t *mpu_region = &mpu_regions[mpu_region_id];
+            if (mpu_region->process_id != current_pid) {
+                kprint("MPU violation - wrong process\n");
+                mpu_violation_handler(fault_address, current_pid, MPU_PERMISSION_READ);
+                terminate_process(current_pid);
+            } else {
+                kprint("MPU violation - insufficient permissions\n");
+                mpu_violation_handler(fault_address, current_pid, MPU_PERMISSION_READ);
+                terminate_process(current_pid);
+            }
+        } else {
+            // Check traditional memory regions
+            int region_id = find_memory_region(fault_address);
+            if (region_id == -1) {
+                kprint("Memory access violation - address not in any region\n");
+                terminate_process(current_pid);
+            } else {
+                // Check if process has permission to access this region
+                memory_region_t *region = &memory_regions[region_id];
+                if (region->process_id != current_pid) {
+                    kprint("Memory access violation - wrong process\n");
+                    terminate_process(current_pid);
+                } else {
+                    kprint("Memory access violation - insufficient permissions\n");
+                    terminate_process(current_pid);
+                }
+            }
+        }
+    } else {
+        kprint("Page fault in kernel mode\n");
+    }
+    
+    kprint("System halted due to page fault\n");
+    asm volatile("cli");
+    asm volatile("hlt");
 }
 
 void register_interrupt_handler(u8 n, isr_t handler) {

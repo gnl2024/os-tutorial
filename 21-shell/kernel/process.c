@@ -127,11 +127,19 @@ void terminate_process(int pid) {
     process_t *proc = get_process(pid);
     if (proc) {
         proc->state = PROCESS_TERMINATED;
+        
+        // Free process memory regions
+        for (int i = 0; i < region_count; i++) {
+            if (memory_regions[i].active && memory_regions[i].process_id == pid) {
+                free_memory_region(i);
+            }
+        }
+        
         kprint("Process terminated PID: ");
         char pid_str[10];
         int_to_ascii(pid, pid_str);
         kprint(pid_str);
-        kprint("\n");
+        kprint(" (memory freed)\n");
     }
 }
 

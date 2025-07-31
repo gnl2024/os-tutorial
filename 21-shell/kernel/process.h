@@ -45,5 +45,8 @@ void schedule(void);
 void switch_to_process(process_t *proc);
 int get_current_pid(void);
 process_t *get_process(int pid);
+void terminate_process(int pid);
+void block_process(int pid);
+void unblock_process(int pid);
 
 #endif // PROCESS_H 
