@@ -3,17 +3,18 @@
 #include "../libc/string.h"
 #include "process.h"
 #include "privilege.h"
+#include "ipc.h"
 
 #define NULL ((void*)0)
 
 // System call handler table
 typedef void (*syscall_handler_t)(registers_t *);
-syscall_handler_t syscall_handlers[10];
+syscall_handler_t syscall_handlers[20]; // Increased for IPC calls
 
 // Initialize system call interface
 void init_syscall_interface(void) {
     // Clear all handlers
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 20; i++) {
         syscall_handlers[i] = NULL;
     }
     
@@ -24,6 +25,13 @@ void init_syscall_interface(void) {
     register_syscall_handler(SYS_CALL_ALLOC, syscall_alloc);
     register_syscall_handler(SYS_CALL_FREE, syscall_free);
     
+    // Register IPC handlers
+    register_syscall_handler(SYS_IPC_SEND, syscall_ipc_send);
+    register_syscall_handler(SYS_IPC_RECEIVE, syscall_ipc_receive);
+    register_syscall_handler(SYS_IPC_CREATE_QUEUE, syscall_ipc_create_queue);
+    register_syscall_handler(SYS_IPC_DELETE_QUEUE, syscall_ipc_delete_queue);
+    register_syscall_handler(SYS_IPC_GET_QUEUE_STATUS, syscall_ipc_get_queue_status);
+    
     kprint("System call interface initialized\n");
 }
 
@@ -32,7 +40,7 @@ void syscall_handler(registers_t *regs) {
     u32 syscall_number = regs->eax;
     
     // Validate system call number
-    if (syscall_number >= 10 || syscall_handlers[syscall_number] == NULL) {
+    if (syscall_number >= 20 || syscall_handlers[syscall_number] == NULL) {
         kprint("Invalid system call: ");
         char num_str[10];
         int_to_ascii(syscall_number, num_str);
@@ -48,7 +56,7 @@ void syscall_handler(registers_t *regs) {
 
 // Register a system call handler
 void register_syscall_handler(u32 syscall_number, void (*handler)(registers_t *)) {
-    if (syscall_number < 10) {
+    if (syscall_number < 20) {
         syscall_handlers[syscall_number] = handler;
     }
 }
@@ -70,6 +78,88 @@ void syscall_exit(registers_t *regs) {
     }
     
     regs->eax = 0; // Success
+}
+
+// IPC System Call Handlers
+
+// System call: IPC_SEND
+void syscall_ipc_send(registers_t *regs) {
+    u32 receiver_pid = regs->ebx;
+    u32 message_type = regs->ecx;
+    u32 data_ptr = regs->edx;
+    u32 data_size = regs->esi;
+    
+    kprint("IPC Send to PID: ");
+    char pid_str[10];
+    int_to_ascii(receiver_pid, pid_str);
+    kprint(pid_str);
+    kprint(" type: ");
+    int_to_ascii(message_type, pid_str);
+    kprint(pid_str);
+    kprint(" size: ");
+    int_to_ascii(data_size, pid_str);
+    kprint(pid_str);
+    kprint("\n");
+    
+    // Call IPC send function
+    u32 result = sys_ipc_send(receiver_pid, message_type, (void*)data_ptr, data_size);
+    regs->eax = result;
+}
+
+// System call: IPC_RECEIVE
+void syscall_ipc_receive(registers_t *regs) {
+    u32 message_ptr = regs->ebx;
+    
+    kprint("IPC Receive message\n");
+    
+    // Call IPC receive function
+    u32 result = sys_ipc_receive((ipc_message_t*)message_ptr);
+    regs->eax = result;
+}
+
+// System call: IPC_CREATE_QUEUE
+void syscall_ipc_create_queue(registers_t *regs) {
+    u32 max_messages = regs->ebx;
+    
+    kprint("IPC Create queue with max messages: ");
+    char msg_str[10];
+    int_to_ascii(max_messages, msg_str);
+    kprint(msg_str);
+    kprint("\n");
+    
+    // Call IPC create queue function
+    u32 result = sys_ipc_create_queue(max_messages);
+    regs->eax = result;
+}
+
+// System call: IPC_DELETE_QUEUE
+void syscall_ipc_delete_queue(registers_t *regs) {
+    u32 queue_id = regs->ebx;
+    
+    kprint("IPC Delete queue: ");
+    char queue_str[10];
+    int_to_ascii(queue_id, queue_str);
+    kprint(queue_str);
+    kprint("\n");
+    
+    // Call IPC delete queue function
+    u32 result = sys_ipc_delete_queue(queue_id);
+    regs->eax = result;
+}
+
+// System call: IPC_GET_QUEUE_STATUS
+void syscall_ipc_get_queue_status(registers_t *regs) {
+    u32 queue_id = regs->ebx;
+    
+    kprint("IPC Get queue status: ");
+    char queue_str[10];
+    int_to_ascii(queue_id, queue_str);
+    kprint(queue_str);
+    kprint("\n");
+    
+    // Call IPC get queue status function
+    u32 result = sys_ipc_get_queue_status(queue_id);
+    regs->eax = result;
 }
 
 // System call: WRITE

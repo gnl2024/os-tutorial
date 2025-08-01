@@ -3,12 +3,12 @@ HEADERS = $(wildcard kernel/*.h drivers/*.h cpu/*.h libc/*.h)
 # Nice syntax for file extension replacement
 OBJ = ${C_SOURCES:.c=.o cpu/isr_stubs_simple.o cpu/gdt_flush.o cpu/process_switch.o} 
 
-# Change this if your cross-compiler is somewhere else
-CC = i386-elf-gcc
-GDB = i386-elf-gdb
+# Use the proper bare-metal cross-compiler
+CC = i686-elf-gcc
+GDB = gdb
 # -g: Use debugging symbols in gcc
 CFLAGS = -g -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -nostartfiles -nodefaultlibs \
-		 -Wall -Wextra -Werror
+		 -Wall -Wextra -Werror -fno-pie -ffreestanding
 
 # First rule is run by default
 os-image.bin: boot/bootsect.bin kernel.bin
@@ -17,11 +17,11 @@ os-image.bin: boot/bootsect.bin kernel.bin
 # '--oformat binary' deletes all symbols as a collateral, so we don't need
 # to 'strip' them manually on this case
 kernel.bin: boot/kernel_entry.o ${OBJ}
-	i386-elf-ld -o $@ -Ttext 0x1000 $^ --oformat binary
+	i686-elf-ld -o $@ -Ttext 0x1000 $^ --oformat binary
 
 # Used for debugging purposes
 kernel.elf: boot/kernel_entry.o ${OBJ}
-	i386-elf-ld -o $@ -Ttext 0x1000 $^ 
+	i686-linux-gnu-ld -o $@ -Ttext 0x1000 $^ 
 
 run: os-image.bin
 	qemu-system-i386 -fda os-image.bin
