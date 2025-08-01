@@ -10,6 +10,10 @@ typedef          short s16;
 typedef unsigned char  u8;
 typedef          char  s8;
 
+/* 64-bit types for multiboot2 support */
+typedef unsigned long long u64;
+typedef          long long s64;
+
 #define low_16(address) (u16)((address) & 0xFFFF)
 #define high_16(address) (u16)(((address) >> 16) & 0xFFFF)
 

@@ -1,5 +1,6 @@
 #include "../cpu/isr.h"
 #include "../drivers/screen.h"
+#include "../drivers/keyboard.h"
 #include "kernel.h"
 #include "process.h"
 #include "memory.h"
@@ -21,7 +22,7 @@ void test_process_function(void) {
     kprint("\n");
 }
 
-void main() {
+void main(void) {
     // Simple test to see if kernel loads
     kprint("Hello from kernel!\n");
     kprint("Kernel loaded successfully!\n");
@@ -29,6 +30,7 @@ void main() {
     // Basic initialization only
     isr_install();
     irq_install();
+    init_keyboard(); // <-- Enable keyboard input
     
     // Initialize IPC system
     init_ipc_system();

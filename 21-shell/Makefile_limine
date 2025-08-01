@@ -1,0 +1,84 @@
+# Makefile for WISP-BB with Limine bootloader
+# Uses pre-built Limine binaries
+
+# Compiler and assembler
+CC = i686-elf-gcc
+AS = nasm
+LD = i686-elf-ld
+
+# Flags
+CFLAGS = -g -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -nostartfiles -nodefaultlibs -Wall -Wextra -Werror -fno-pie -ffreestanding
+ASFLAGS = -f elf
+LDFLAGS = -Ttext 0x100000 --oformat elf32-i386
+
+# Directories
+BOOT_DIR = boot
+KERNEL_DIR = kernel
+CPU_DIR = cpu
+DRIVERS_DIR = drivers
+LIBC_DIR = libc
+
+# Object files
+BOOT_OBJS = $(BOOT_DIR)/multiboot2_header.o $(BOOT_DIR)/kernel_entry_limine.o
+KERNEL_OBJS = $(KERNEL_DIR)/kernel.o $(KERNEL_DIR)/ipc.o $(KERNEL_DIR)/memory.o $(KERNEL_DIR)/mpu.o $(KERNEL_DIR)/privilege.o $(KERNEL_DIR)/process.o $(KERNEL_DIR)/syscalls.o
+CPU_OBJS = $(CPU_DIR)/isr_stubs_simple.o $(CPU_DIR)/gdt_flush.o $(CPU_DIR)/process_switch.o $(CPU_DIR)/gdt.o $(CPU_DIR)/idt.o $(CPU_DIR)/isr.o $(CPU_DIR)/ports.o $(CPU_DIR)/segment_protection.o $(CPU_DIR)/timer.o
+DRIVERS_OBJS = $(DRIVERS_DIR)/keyboard.o $(DRIVERS_DIR)/print.o $(DRIVERS_DIR)/screen.o
+LIBC_OBJS = $(LIBC_DIR)/mem.o $(LIBC_DIR)/string.o
+
+# All objects
+OBJS = $(BOOT_OBJS) $(KERNEL_OBJS) $(CPU_OBJS) $(DRIVERS_OBJS) $(LIBC_OBJS)
+
+# Targets
+.PHONY: all clean run-limine run-limine-optimized debug-limine
+
+all: kernel.bin os-image.iso
+
+kernel.bin: $(OBJS)
+	$(LD) -o $@ $(LDFLAGS) $(OBJS)
+
+# Build rules
+$(BOOT_DIR)/multiboot2_header.o: $(BOOT_DIR)/multiboot2_header.asm
+	$(AS) $(ASFLAGS) -o $@ $<
+
+$(BOOT_DIR)/kernel_entry_limine.o: $(BOOT_DIR)/kernel_entry_limine.asm
+	$(AS) $(ASFLAGS) -o $@ $<
+
+$(CPU_DIR)/isr_stubs_simple.o: $(CPU_DIR)/isr_stubs_simple.asm
+	$(AS) $(ASFLAGS) -o $@ $<
+
+# C compilation rules
+$(KERNEL_DIR)/%.o: $(KERNEL_DIR)/%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(CPU_DIR)/%.o: $(CPU_DIR)/%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(DRIVERS_DIR)/%.o: $(DRIVERS_DIR)/%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(LIBC_DIR)/%.o: $(LIBC_DIR)/%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+# Create ISO with Limine
+os-image.iso: kernel.bin limine.cfg
+	mkdir -p iso/boot
+	cp kernel.bin iso/boot/
+	cp limine.cfg iso/
+	cp limine-bios.sys iso/
+	cp limine-bios-cd.bin iso/
+	xorriso -as mkisofs -b limine-bios-cd.bin -no-emul-boot -boot-load-size 4 -boot-info-table --protective-msdos-label iso -o $@
+
+# Run targets
+run-limine: os-image.iso
+	qemu-system-i386 -cdrom os-image.iso
+
+run-limine-optimized: os-image.iso
+	qemu-system-i386 -enable-kvm -cpu host -smp 1 -m 128 -cdrom os-image.iso
+
+debug-limine: os-image.iso
+	qemu-system-i386 -cdrom os-image.iso -serial stdio -monitor stdio
+
+clean:
+	rm -rf *.bin *.dis *.o *.elf *.iso
+	rm -rf $(KERNEL_DIR)/*.o $(BOOT_DIR)/*.o $(CPU_DIR)/*.o $(DRIVERS_DIR)/*.o $(LIBC_DIR)/*.o
+	rm -rf iso/ 

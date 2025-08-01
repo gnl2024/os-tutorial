@@ -1,0 +1,47 @@
+# Direct Kernel Loading Makefile for WISP-BB
+C_SOURCES = $(wildcard kernel/*.c drivers/*.c cpu/*.c libc/*.c)
+HEADERS = $(wildcard kernel/*.h drivers/*.h cpu/*.h libc/*.h)
+
+# Direct kernel object files (exclude original kernel.c, use kernel_direct.c)
+C_SOURCES_DIRECT = $(filter-out kernel/kernel.c, $(wildcard kernel/*.c drivers/*.c cpu/*.c libc/*.c)) kernel/kernel_direct.c
+OBJ = ${C_SOURCES_DIRECT:.c=.o boot/kernel_entry_direct.o cpu/isr_stubs_simple.o cpu/gdt_flush.o cpu/process_switch.o}
+
+# Use the proper bare-metal cross-compiler
+CC = i686-elf-gcc
+GDB = gdb
+
+# -g: Use debugging symbols in gcc
+CFLAGS = -g -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -nostartfiles -nodefaultlibs \
+		 -Wall -Wextra -Werror -fno-pie -ffreestanding
+
+# Direct kernel (ELF format)
+kernel.bin: boot/kernel_entry_direct.o ${OBJ}
+	i686-elf-ld -o $@ -Ttext 0x100000 $^ --oformat elf32-i386
+
+# Run with QEMU direct kernel loading
+run-direct: kernel.bin
+	qemu-system-i386 -kernel kernel.bin -m 128
+
+# Run with QEMU direct kernel loading (optimized)
+run-direct-optimized: kernel.bin
+	qemu-system-i386 -enable-kvm -cpu host -smp 1 -m 128 -kernel kernel.bin
+
+# Debug with direct kernel loading
+debug-direct: kernel.bin
+	qemu-system-i386 -s -kernel kernel.bin -d guest_errors &
+	${GDB} -ex "target remote localhost:1234" -ex "symbol-file kernel.bin"
+
+# Generic rules for wildcards
+# To make an object, always compile from its .c
+%.o: %.c ${HEADERS}
+	${CC} ${CFLAGS} -ffreestanding -c $< -o $@
+
+%.o: %.asm
+	nasm $< -f elf -o $@
+
+%.bin: %.asm
+	nasm $< -f bin -o $@
+
+clean:
+	rm -rf *.bin *.dis *.o *.elf
+	rm -rf kernel/*.o boot/*.bin drivers/*.o boot/*.o cpu/*.o libc/*.o 

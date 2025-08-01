@@ -9,12 +9,12 @@
 
 // System call handler table
 typedef void (*syscall_handler_t)(registers_t *);
-syscall_handler_t syscall_handlers[20]; // Increased for IPC calls
+syscall_handler_t syscall_handlers[30]; // Increased for enhanced IPC calls
 
 // Initialize system call interface
 void init_syscall_interface(void) {
     // Clear all handlers
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 30; i++) {
         syscall_handlers[i] = NULL;
     }
     
@@ -25,14 +25,19 @@ void init_syscall_interface(void) {
     register_syscall_handler(SYS_CALL_ALLOC, syscall_alloc);
     register_syscall_handler(SYS_CALL_FREE, syscall_free);
     
-    // Register IPC handlers
+    // Register basic IPC handlers
     register_syscall_handler(SYS_IPC_SEND, syscall_ipc_send);
     register_syscall_handler(SYS_IPC_RECEIVE, syscall_ipc_receive);
     register_syscall_handler(SYS_IPC_CREATE_QUEUE, syscall_ipc_create_queue);
     register_syscall_handler(SYS_IPC_DELETE_QUEUE, syscall_ipc_delete_queue);
-    register_syscall_handler(SYS_IPC_GET_QUEUE_STATUS, syscall_ipc_get_queue_status);
     
-    kprint("System call interface initialized\n");
+    // Register enhanced IPC handlers
+    register_syscall_handler(SYS_IPC_SEND_PRIORITY, syscall_ipc_send_priority);
+    register_syscall_handler(SYS_IPC_RECEIVE_TIMEOUT, syscall_ipc_receive_timeout);
+    register_syscall_handler(SYS_IPC_BROADCAST, syscall_ipc_broadcast);
+    register_syscall_handler(SYS_IPC_GET_STATS, syscall_ipc_get_stats);
+    
+    kprint("Enhanced system call interface initialized\n");
 }
 
 // Main system call handler
@@ -40,7 +45,7 @@ void syscall_handler(registers_t *regs) {
     u32 syscall_number = regs->eax;
     
     // Validate system call number
-    if (syscall_number >= 20 || syscall_handlers[syscall_number] == NULL) {
+    if (syscall_number >= 30 || syscall_handlers[syscall_number] == NULL) {
         kprint("Invalid system call: ");
         char num_str[10];
         int_to_ascii(syscall_number, num_str);
@@ -56,7 +61,7 @@ void syscall_handler(registers_t *regs) {
 
 // Register a system call handler
 void register_syscall_handler(u32 syscall_number, void (*handler)(registers_t *)) {
-    if (syscall_number < 20) {
+    if (syscall_number < 30) {
         syscall_handlers[syscall_number] = handler;
     }
 }
@@ -80,8 +85,6 @@ void syscall_exit(registers_t *regs) {
     regs->eax = 0; // Success
 }
 
-// IPC System Call Handlers
-
 // System call: IPC_SEND
 void syscall_ipc_send(registers_t *regs) {
     u32 receiver_pid = regs->ebx;
@@ -89,20 +92,9 @@ void syscall_ipc_send(registers_t *regs) {
     u32 data_ptr = regs->edx;
     u32 data_size = regs->esi;
     
-    kprint("IPC Send to PID: ");
-    char pid_str[10];
-    int_to_ascii(receiver_pid, pid_str);
-    kprint(pid_str);
-    kprint(" type: ");
-    int_to_ascii(message_type, pid_str);
-    kprint(pid_str);
-    kprint(" size: ");
-    int_to_ascii(data_size, pid_str);
-    kprint(pid_str);
-    kprint("\n");
+    void *data = (void*)data_ptr;
     
-    // Call IPC send function
-    u32 result = sys_ipc_send(receiver_pid, message_type, (void*)data_ptr, data_size);
+    u32 result = sys_ipc_send(receiver_pid, message_type, data, data_size);
     regs->eax = result;
 }
 
@@ -110,10 +102,9 @@ void syscall_ipc_send(registers_t *regs) {
 void syscall_ipc_receive(registers_t *regs) {
     u32 message_ptr = regs->ebx;
     
-    kprint("IPC Receive message\n");
+    ipc_message_t *message = (ipc_message_t*)message_ptr;
     
-    // Call IPC receive function
-    u32 result = sys_ipc_receive((ipc_message_t*)message_ptr);
+    u32 result = sys_ipc_receive(message);
     regs->eax = result;
 }
 
@@ -121,13 +112,6 @@ void syscall_ipc_receive(registers_t *regs) {
 void syscall_ipc_create_queue(registers_t *regs) {
     u32 max_messages = regs->ebx;
     
-    kprint("IPC Create queue with max messages: ");
-    char msg_str[10];
-    int_to_ascii(max_messages, msg_str);
-    kprint(msg_str);
-    kprint("\n");
-    
-    // Call IPC create queue function
     u32 result = sys_ipc_create_queue(max_messages);
     regs->eax = result;
 }
@@ -136,92 +120,126 @@ void syscall_ipc_create_queue(registers_t *regs) {
 void syscall_ipc_delete_queue(registers_t *regs) {
     u32 queue_id = regs->ebx;
     
-    kprint("IPC Delete queue: ");
-    char queue_str[10];
-    int_to_ascii(queue_id, queue_str);
-    kprint(queue_str);
-    kprint("\n");
-    
-    // Call IPC delete queue function
     u32 result = sys_ipc_delete_queue(queue_id);
     regs->eax = result;
 }
 
-// System call: IPC_GET_QUEUE_STATUS
-void syscall_ipc_get_queue_status(registers_t *regs) {
-    u32 queue_id = regs->ebx;
+// NEW: Enhanced IPC System Call Handlers
+
+// System call: IPC_SEND_PRIORITY
+void syscall_ipc_send_priority(registers_t *regs) {
+    u32 receiver_pid = regs->ebx;
+    u32 message_type = regs->ecx;
+    u32 data_ptr = regs->edx;
+    u32 data_size = regs->esi;
+    u32 priority = regs->edi;
     
-    kprint("IPC Get queue status: ");
-    char queue_str[10];
-    int_to_ascii(queue_id, queue_str);
-    kprint(queue_str);
-    kprint("\n");
+    void *data = (void*)data_ptr;
     
-    // Call IPC get queue status function
-    u32 result = sys_ipc_get_queue_status(queue_id);
+    u32 result = sys_ipc_send_priority(receiver_pid, message_type, data, data_size, priority);
+    regs->eax = result;
+}
+
+// System call: IPC_RECEIVE_TIMEOUT
+void syscall_ipc_receive_timeout(registers_t *regs) {
+    u32 message_ptr = regs->ebx;
+    u32 timeout = regs->ecx;
+    
+    ipc_message_t *message = (ipc_message_t*)message_ptr;
+    
+    u32 result = sys_ipc_receive_timeout(message, timeout);
+    regs->eax = result;
+}
+
+// System call: IPC_BROADCAST
+void syscall_ipc_broadcast(registers_t *regs) {
+    u32 message_type = regs->ebx;
+    u32 data_ptr = regs->ecx;
+    u32 data_size = regs->edx;
+    
+    void *data = (void*)data_ptr;
+    
+    u32 result = sys_ipc_broadcast(message_type, data, data_size);
+    regs->eax = result;
+}
+
+// System call: IPC_GET_STATS
+void syscall_ipc_get_stats(registers_t *regs) {
+    u32 stats_ptr = regs->ebx;
+    
+    ipc_system_stats_t *stats = (ipc_system_stats_t*)stats_ptr;
+    
+    u32 result = sys_ipc_get_stats(stats);
     regs->eax = result;
 }
 
 // System call: WRITE
 void syscall_write(registers_t *regs) {
     u32 fd = regs->ebx;
-    u32 buffer = regs->ecx;
-    u32 size = regs->edx;
-    (void)buffer; // Suppress unused variable warning
+    u32 buf = regs->ecx;
+    u32 count = regs->edx;
     
-    kprint("Write to fd: ");
-    char fd_str[5];
+    kprint("Write syscall: fd=");
+    char fd_str[10];
     int_to_ascii(fd, fd_str);
     kprint(fd_str);
-    kprint(" size: ");
-    int_to_ascii(size, fd_str);
-    kprint(fd_str);
+    kprint(", count=");
+    char count_str[10];
+    int_to_ascii(count, count_str);
+    kprint(count_str);
     kprint("\n");
     
-    regs->eax = size; // Return bytes written
+    // For now, just print the data
+    char *data = (char*)buf;
+    for (u32 i = 0; i < count; i++) {
+        char str[2] = {data[i], '\0'};
+        kprint(str);
+    }
+    
+    regs->eax = count; // Return number of bytes written
 }
 
 // System call: READ
 void syscall_read(registers_t *regs) {
     u32 fd = regs->ebx;
-    u32 buffer = regs->ecx;
-    u32 size = regs->edx;
-    (void)buffer; // Suppress unused variable warning
+    u32 count = regs->edx;
     
-    kprint("Read from fd: ");
-    char fd_str[5];
+    kprint("Read syscall: fd=");
+    char fd_str[10];
     int_to_ascii(fd, fd_str);
     kprint(fd_str);
-    kprint(" size: ");
-    int_to_ascii(size, fd_str);
-    kprint(fd_str);
+    kprint(", count=");
+    char count_str[10];
+    int_to_ascii(count, count_str);
+    kprint(count_str);
     kprint("\n");
     
-    regs->eax = 0; // Return bytes read
+    // For now, return 0 (no data read)
+    regs->eax = 0;
 }
 
 // System call: ALLOC
 void syscall_alloc(registers_t *regs) {
     u32 size = regs->ebx;
     
-    kprint("Allocate memory: ");
+    kprint("Alloc syscall: size=");
     char size_str[10];
     int_to_ascii(size, size_str);
     kprint(size_str);
-    kprint(" bytes\n");
+    kprint("\n");
     
     // For now, return a dummy address
-    regs->eax = 0x100000; // Return allocated address
+    regs->eax = 0x1000000; // Return dummy address
 }
 
 // System call: FREE
 void syscall_free(registers_t *regs) {
-    u32 address = regs->ebx;
+    u32 ptr = regs->ebx;
     
-    kprint("Free memory at: ");
-    char addr_str[10];
-    int_to_ascii(address, addr_str);
-    kprint(addr_str);
+    kprint("Free syscall: ptr=");
+    char ptr_str[10];
+    int_to_ascii(ptr, ptr_str);
+    kprint(ptr_str);
     kprint("\n");
     
     regs->eax = 0; // Success

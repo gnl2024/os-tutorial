@@ -17,11 +17,14 @@
 #define SYS_CALL_FREE     5
 
 // IPC System call numbers (from ipc.h)
-#define SYS_IPC_SEND        0x30
-#define SYS_IPC_RECEIVE     0x31
-#define SYS_IPC_CREATE_QUEUE 0x32
-#define SYS_IPC_DELETE_QUEUE 0x33
-#define SYS_IPC_GET_QUEUE_STATUS 0x34
+#define SYS_IPC_SEND        20
+#define SYS_IPC_RECEIVE     21
+#define SYS_IPC_CREATE_QUEUE 22
+#define SYS_IPC_DELETE_QUEUE 23
+#define SYS_IPC_SEND_PRIORITY 24
+#define SYS_IPC_RECEIVE_TIMEOUT 25
+#define SYS_IPC_BROADCAST 26
+#define SYS_IPC_GET_STATS 27
 
 // System call function declarations
 void init_syscall_interface(void);
@@ -40,6 +43,9 @@ void syscall_ipc_send(registers_t *regs);
 void syscall_ipc_receive(registers_t *regs);
 void syscall_ipc_create_queue(registers_t *regs);
 void syscall_ipc_delete_queue(registers_t *regs);
-void syscall_ipc_get_queue_status(registers_t *regs);
+void syscall_ipc_send_priority(registers_t *regs);
+void syscall_ipc_receive_timeout(registers_t *regs);
+void syscall_ipc_broadcast(registers_t *regs);
+void syscall_ipc_get_stats(registers_t *regs);
 
 #endif // SYSCALLS_H 

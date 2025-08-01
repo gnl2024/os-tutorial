@@ -1,0 +1,58 @@
+# GRUB2 Multiboot Makefile for WISP-BB
+C_SOURCES = $(wildcard kernel/*.c drivers/*.c cpu/*.c libc/*.c)
+HEADERS = $(wildcard kernel/*.h drivers/*.h cpu/*.h libc/*.h)
+
+# Multiboot kernel object files
+OBJ = ${C_SOURCES:.c=.o boot/kernel_entry_grub.o cpu/isr_stubs_simple.o cpu/gdt_flush.o cpu/process_switch.o}
+
+# Use the proper bare-metal cross-compiler
+CC = i686-elf-gcc
+GDB = gdb
+
+# -g: Use debugging symbols in gcc
+CFLAGS = -g -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -nostartfiles -nodefaultlibs \
+		 -Wall -Wextra -Werror -fno-pie -ffreestanding
+
+# GRUB2 kernel (ELF format)
+kernel.bin: boot/multiboot_header.o boot/kernel_entry_grub.o ${OBJ}
+	i686-elf-ld -o $@ -Ttext 0x100000 $^ --oformat elf32-i386
+
+# Create GRUB2 ISO
+os-image.iso: kernel.bin
+	mkdir -p iso/boot/grub
+	cp kernel.bin iso/boot/
+	cp grub.cfg iso/boot/grub/
+	grub-mkrescue -o os-image.iso iso/
+
+# Run with GRUB2
+run-grub: os-image.iso
+	qemu-system-i386 -cdrom os-image.iso -m 128
+
+# Run with GRUB2 (optimized)
+run-grub-optimized: os-image.iso
+	qemu-system-i386 -enable-kvm -cpu host -smp 1 -m 128 -cdrom os-image.iso
+
+# Debug with GRUB2
+debug-grub: os-image.iso kernel.bin
+	qemu-system-i386 -s -cdrom os-image.iso -d guest_errors &
+	${GDB} -ex "target remote localhost:1234" -ex "symbol-file kernel.bin"
+
+# Generic rules for wildcards
+# To make an object, always compile from its .c
+%.o: %.c ${HEADERS}
+	${CC} ${CFLAGS} -ffreestanding -c $< -o $@
+
+%.o: %.asm
+	nasm $< -f elf -o $@
+
+%.bin: %.asm
+	nasm $< -f bin -o $@
+
+clean:
+	rm -rf *.bin *.dis *.o os-image.iso *.elf
+	rm -rf kernel/*.o boot/*.bin drivers/*.o boot/*.o cpu/*.o libc/*.o
+	rm -rf iso/
+
+clean-iso:
+	rm -rf iso/
+	rm -f os-image.iso 

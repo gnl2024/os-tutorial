@@ -210,9 +210,9 @@ void irq_handler(registers_t r) {
 }
 
 void irq_install() {
-    /* Mask IRQ 0 (timer) in PIC to prevent timer interrupts */
+    /* Enable IRQ 1 (keyboard) in PIC */
     u8 mask = port_byte_in(0x21); /* Read current mask */
-    mask |= 0x01; /* Set bit 0 to mask IRQ 0 */
+    mask &= ~0x02; /* Clear bit 1 to enable IRQ 1 (keyboard) */
     port_byte_out(0x21, mask); /* Write back mask */
     
     /* Enable interruptions */
