@@ -1,15 +1,18 @@
-# Mini32OS - Enhanced Microkernel with Command Interface
+# Mini32OS - Complete Command Interface
 
 ## 🎯 **System Overview**
 
-Mini32OS is a 32-bit microkernel operating system featuring enhanced command interface, process management, memory protection, and inter-process communication (IPC). The system provides a professional command-line interface with real-time system monitoring capabilities.
+Mini32OS is a 32-bit microkernel operating system featuring a complete command interface, process management, memory protection, and inter-process communication (IPC). The system provides a professional command-line interface with real-time system monitoring capabilities.
 
 ## ✅ **Current Features**
 
-### **🎯 Command Interface**
+### **🎯 Complete Command Interface**
 - **END** - Stop the CPU and exit
 - **MEMORY** - Display memory statistics (real data)
 - **STATS** - Display IPC system statistics (real data)
+- **PROCESSES** - Display all active processes
+- **CLEAR** - Clear the screen
+- **TIME** - Show system uptime (human-readable format)
 - **HELP** - Show available commands
 
 ### **🔧 Core Systems**
@@ -26,6 +29,7 @@ Mini32OS is a 32-bit microkernel operating system featuring enhanced command int
 - **Memory Tracking**: Real allocation statistics
 - **IPC Activity**: Comprehensive message passing statistics
 - **Process Isolation**: Complete user/kernel mode separation
+- **Time Display**: Human-readable uptime format
 
 ## 🚀 **Quick Start**
 
@@ -35,7 +39,7 @@ Mini32OS is a 32-bit microkernel operating system featuring enhanced command int
 make clean && make
 
 # Run in QEMU
-qemu-system-i386 -fda os-image.bin -m 128 -enable-kvm -display gtk -usb -device usb-tablet
+qemu-system-i386 -fda os-image.bin -m 128 -enable-kvm -display gtk
 ```
 
 ### **Available Commands**
@@ -43,6 +47,9 @@ qemu-system-i386 -fda os-image.bin -m 128 -enable-kvm -display gtk -usb -device 
 END       - Stop the CPU and exit
 MEMORY    - Display memory statistics
 STATS     - Display IPC system statistics
+PROCESSES - Display all active processes
+CLEAR     - Clear the screen
+TIME      - Show system uptime
 HELP      - Show this help message
 ```
 
@@ -72,6 +79,36 @@ Active processes:
 >
 ```
 
+**PROCESSES Command:**
+```
+=== Active Processes ===
+PID 0: RUNNING (KERNEL)
+PID 1: READY (USER)
+Total active processes: 2
+=====================
+>
+```
+
+**TIME Command:**
+```
+System uptime: 1h 23m 45s (251250 ticks)
+>
+```
+
+**HELP Command:**
+```
+=== Available Commands ===
+END       - Stop the CPU and exit
+MEMORY    - Display memory statistics
+STATS     - Display IPC system statistics
+PROCESSES - Display all active processes
+CLEAR     - Clear the screen
+TIME      - Show system uptime
+HELP      - Show this help message
+=======================
+>
+```
+
 ## 🔧 **Technical Architecture**
 
 ### **Kernel Components**
@@ -96,7 +133,7 @@ Active processes:
 ## 📈 **Performance Metrics**
 
 ### **System Size**
-- **Current Size**: ~26,000 bytes
+- **Current Size**: ~31K bytes
 - **Growth**: Minimal (compiler optimization)
 - **Efficiency**: High (zero size impact for most additions)
 
@@ -111,6 +148,12 @@ Active processes:
 - **Broadcasts**: 1 test broadcast
 - **Process Activity**: 3 processes (kernel + 2 user)
 
+### **Timer Performance**
+- **Frequency**: 50 ticks per second
+- **Accuracy**: Hardware timer-based
+- **Display**: Human-readable format (h/m/s)
+- **Debug**: No spam output
+
 ## 🧪 **Testing**
 
 ### **Build Testing**
@@ -123,6 +166,7 @@ Active processes:
 - **Keyboard Input**: Functional command input
 - **Command Execution**: All commands work correctly
 - **Data Display**: Shows real system data
+- **Timer**: Working without debug spam
 
 ## 🚀 **Development Status**
 
@@ -130,8 +174,9 @@ Active processes:
 - **Process Management**: Multi-process support with user/kernel modes
 - **Memory Management**: Allocation tracking with statistics
 - **IPC System**: Message passing with comprehensive statistics
-- **Command Interface**: Professional command-line interface
+- **Command Interface**: Complete command-line interface
 - **Real-time Monitoring**: Commands show actual system state
+- **Time Display**: Human-readable uptime format
 
 ### **🔄 Current Development**
 - **Incremental Command Addition**: Step-by-step command development
@@ -139,22 +184,24 @@ Active processes:
 - **Testing and Validation**: Comprehensive QEMU-based testing
 
 ### **📋 Planned Features**
-- **PROCESSES Command**: Display all active processes
-- **CLEAR Command**: Clear the screen
-- **TIME Command**: Show system uptime
-- **VERSION Command**: Show OS version information
+- **VERSION Command** - Show OS version information
+- **Enhanced Commands** - Add more features to existing commands
+- **New Commands** - Add additional system commands
+- **System Enhancement** - Improve existing functionality
 
 ## 📚 **Documentation**
 
 ### **System Documentation**
 - `CURRENT_SYSTEM_STATUS.md` - Comprehensive system status
-- `MEMORY_STATS_CORRECTIONS.md` - Command corrections and fixes
-- `FIRST_INCREMENT_RESULTS.md` - Development progress tracking
+- `SECOND_INCREMENT_RESULTS.md` - Development progress tracking
+- `FIRST_INCREMENT_RESULTS.md` - Initial development results
 
 ### **Technical Documentation**
 - **Memory Management**: `libc/mem.c` and `libc/mem.h`
 - **IPC System**: `kernel/ipc.c` and `kernel/ipc.h`
 - **Process Management**: `kernel/process.c` and `kernel/process.h`
+- **Timer System**: `cpu/timer.c` and `cpu/timer.h`
+- **Screen Management**: `drivers/screen.c`
 - **Kernel Interface**: `kernel/kernel.c`
 
 ## 🎯 **Architecture Goals**
@@ -173,7 +220,7 @@ Active processes:
 
 ## 📊 **System Status**
 
-**Status**: ✅ **Stable with Enhanced Commands**
+**Status**: ✅ **Stable with Complete Command Interface**
 **Build**: ✅ **Clean and Working**
 **Testing**: ✅ **QEMU Ready**
 **Documentation**: ✅ **Comprehensive and Up-to-Date**

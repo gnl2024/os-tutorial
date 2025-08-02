@@ -48,5 +48,6 @@ process_t *get_process(int pid);
 void terminate_process(int pid);
 void block_process(int pid);
 void unblock_process(int pid);
+void print_all_processes(void);
 
 #endif // PROCESS_H 

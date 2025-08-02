@@ -157,4 +157,61 @@ void unblock_process(int pid) {
     if (proc) {
         proc->state = PROCESS_READY;
     }
+}
+
+// Print all active processes
+void print_all_processes(void) {
+    kprint("=== Active Processes ===\n");
+    
+    int active_count = 0;
+    for (int i = 0; i < MAX_PROCESSES; i++) {
+        process_t *proc = &processes[i];
+        if (proc->state != PROCESS_TERMINATED) {
+            active_count++;
+            
+            // Print PID
+            kprint("PID ");
+            char pid_str[10];
+            int_to_ascii(proc->pid, pid_str);
+            kprint(pid_str);
+            kprint(": ");
+            
+            // Print state
+            switch (proc->state) {
+                case PROCESS_RUNNING:
+                    kprint("RUNNING");
+                    break;
+                case PROCESS_READY:
+                    kprint("READY");
+                    break;
+                case PROCESS_BLOCKED:
+                    kprint("BLOCKED");
+                    break;
+                default:
+                    kprint("UNKNOWN");
+                    break;
+            }
+            
+            // Print privileges
+            kprint(" (");
+            if (proc->privileges == PRIVILEGE_KERNEL) {
+                kprint("KERNEL");
+            } else {
+                kprint("USER");
+            }
+            kprint(")\n");
+        }
+    }
+    
+    if (active_count == 0) {
+        kprint("No active processes found.\n");
+    } else {
+        kprint("Total active processes: ");
+        char count_str[10];
+        int_to_ascii(active_count, count_str);
+        kprint(count_str);
+        kprint("\n");
+    }
+    
+    kprint("=====================\n");
 } 

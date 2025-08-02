@@ -12,6 +12,7 @@
 #include "../libc/mem.h"
 #include "../drivers/print.h"
 #include "ipc.h"
+#include "../cpu/timer.h"
 
 #define NULL ((void*)0)
 #define UNUSED(x) (void)(x)
@@ -104,11 +105,55 @@ void user_input(char *input) {
     } else if (strcmp(input, "STATS") == 0) {
         ipc_print_system_stats();
         kprint("> ");
+    } else if (strcmp(input, "PROCESSES") == 0) {
+        print_all_processes();
+        kprint("> ");
+    } else if (strcmp(input, "CLEAR") == 0) {
+        clear_screen();
+        kprint("> ");
+    } else if (strcmp(input, "TIME") == 0) {
+        // Convert ticks to time (50 ticks per second)
+        u32 seconds = tick / 50;
+        u32 minutes = seconds / 60;
+        u32 hours = minutes / 60;
+        seconds = seconds % 60;
+        minutes = minutes % 60;
+        
+        kprint("System uptime: ");
+        
+        if (hours > 0) {
+            char hours_str[10];
+            int_to_ascii(hours, hours_str);
+            kprint(hours_str);
+            kprint("h ");
+        }
+        
+        if (minutes > 0 || hours > 0) {
+            char minutes_str[10];
+            int_to_ascii(minutes, minutes_str);
+            kprint(minutes_str);
+            kprint("m ");
+        }
+        
+        char seconds_str[10];
+        int_to_ascii(seconds, seconds_str);
+        kprint(seconds_str);
+        kprint("s (");
+        
+        char tick_str[10];
+        int_to_ascii(tick, tick_str);
+        kprint(tick_str);
+        kprint(" ticks)\n");
+        
+        kprint("> ");
     } else if (strcmp(input, "HELP") == 0) {
         kprint("=== Available Commands ===\n");
         kprint("END       - Stop the CPU and exit\n");
         kprint("MEMORY    - Display memory statistics\n");
         kprint("STATS     - Display IPC system statistics\n");
+        kprint("PROCESSES - Display all active processes\n");
+        kprint("CLEAR     - Clear the screen\n");
+        kprint("TIME      - Show system uptime\n");
         kprint("HELP      - Show this help message\n");
         kprint("=======================\n");
         kprint("> ");
