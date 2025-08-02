@@ -1,217 +1,190 @@
-# WISP-BB Microkernel Migration
+# Mini32OS - Enhanced Microkernel with Command Interface
 
-## 🎯 **Project Overview**
+## 🎯 **System Overview**
 
-WISP-BB is a comprehensive operating system implementing a step-by-step migration from monolithic kernel to modular microkernel architecture, using MINIX 3 as our blueprint.
+Mini32OS is a 32-bit microkernel operating system featuring enhanced command interface, process management, memory protection, and inter-process communication (IPC). The system provides a professional command-line interface with real-time system monitoring capabilities.
 
-## ✅ **Current Status: Phase 2 Complete**
+## ✅ **Current Features**
 
-### **Completed Phases**
-- ✅ **Phase 1**: Process Foundation - Basic process management and scheduling
-- ✅ **Phase 2**: Memory Protection - Comprehensive memory protection and process isolation
+### **🎯 Command Interface**
+- **END** - Stop the CPU and exit
+- **MEMORY** - Display memory statistics (real data)
+- **STATS** - Display IPC system statistics (real data)
+- **HELP** - Show available commands
 
-### **Current Phase**
-- 🔄 **Phase 3**: Inter-Process Communication (IPC) - Message passing between processes
+### **🔧 Core Systems**
+- **Process Management**: Multi-process support with user/kernel modes
+- **Memory Management**: Allocation tracking with comprehensive statistics
+- **IPC System**: Message passing with detailed activity monitoring
+- **Interrupt Handling**: Timer and keyboard interrupts
+- **Hardware Drivers**: Screen, keyboard, timer drivers
+- **System Calls**: Kernel interface for user processes
+
+### **📊 System Capabilities**
+- **Real-time Monitoring**: Commands show actual system state
+- **Professional Interface**: Clean, usable command prompt
+- **Memory Tracking**: Real allocation statistics
+- **IPC Activity**: Comprehensive message passing statistics
+- **Process Isolation**: Complete user/kernel mode separation
 
 ## 🚀 **Quick Start**
 
-### **Fast Development**
+### **Build and Run**
 ```bash
-# Build and run with optimized QEMU
-./dev_run.sh
+# Build the system
+make clean && make
+
+# Run in QEMU
+qemu-system-i386 -fda os-image.bin -m 128 -enable-kvm -display gtk -usb -device usb-tablet
 ```
 
-### **Available Run Scripts**
-```bash
-./dev_run.sh              # Fast development (build + run)
-./run_qemu_optimized.sh   # Optimized performance
-./run_qemu_window.sh      # Window mode (easier viewing)
-./run_qemu_debug.sh       # Debug mode with GDB
-./debug_qemu.sh           # GDB debugging session
+### **Available Commands**
+```
+END       - Stop the CPU and exit
+MEMORY    - Display memory statistics
+STATS     - Display IPC system statistics
+HELP      - Show this help message
 ```
 
-### **Makefile Commands**
-```bash
-make dev          # Fast development run
-make run-optimized # Optimized performance run
-make run-debug    # Debug mode run
-make debug        # GDB debugging session
+### **Example Output**
+
+**MEMORY Command:**
+```
+Memory Statistics:
+Total allocated: 3584 bytes
+Allocation count: 3
+Max allocation: 2048 bytes
+>
 ```
 
-## 🔧 **System Features**
-
-### **Memory Protection System**
-- **MPU Simulation**: Hardware-like memory protection
-- **Segment Protection**: Enhanced GDT-based protection
-- **Process Isolation**: Complete separation between processes
-- **Privilege Enforcement**: User/kernel mode separation
-
-### **Process Management**
-- **Process Creation**: User and kernel processes supported
-- **State Management**: Full process lifecycle management
-- **Context Switching**: Assembly-level process switching
-- **Memory Allocation**: Automatic heap allocation for processes
-
-### **Error Handling**
-- **Page Fault Detection**: Automatic detection of memory violations
-- **Process Isolation**: Violations trigger process termination
-- **Error Reporting**: Detailed error messages for debugging
-- **System Stability**: System halt on critical violations
-
-## 📊 **Technical Implementation**
-
-### **Core Components**
-- **Kernel**: `kernel/kernel.c` - Main kernel entry point
-- **Memory Management**: `kernel/memory.c/h` - Memory regions and protection
-- **Process Management**: `kernel/process.c/h` - Process creation and scheduling
-- **MPU Simulation**: `kernel/mpu.c/h` - Hardware-like memory protection
-- **Privilege Management**: `kernel/privilege.c/h` - User/kernel mode separation
-- **System Calls**: `kernel/syscalls.c/h` - System call interface
-- **GDT Management**: `cpu/gdt.c/h` - Segment management
-- **Segment Protection**: `cpu/segment_protection.c/h` - Enhanced protection
-- **ISR System**: `cpu/isr.c/h` - Interrupt handling with page faults
-
-### **Assembly Components**
-- **Process Switching**: `cpu/process_switch.asm` - Context switching
-- **GDT Flush**: `cpu/gdt_flush.asm` - Segment reloading
-- **ISR Stubs**: `cpu/isr_stubs_simple.asm` - Interrupt stubs
-
-## 🎯 **Migration Progress**
-
-### **Completed** ✅
-- **Phase 1**: Process Foundation - Basic process management
-- **Phase 2 Day 1-2**: GDT segments and process isolation
-- **Phase 2 Day 3-4**: Memory region management
-- **Phase 2 Day 5-6**: Page fault handling
-- **Phase 2 Day 7**: MPU simulation
-- **Phase 2 Day 8**: Segment-based protection
-- **Phase 2 Day 9**: User/kernel mode separation
-
-### **In Progress** 🔄
-- **Phase 3**: Inter-Process Communication (IPC)
-
-### **Planned** 📋
-- **Phase 4**: User Space Services
-- **Phase 5**: File System
-- **Phase 6**: Standard C Library Integration
-- **Phase 7**: User Interface (LVGL)
-
-## 🚀 **QEMU Optimization**
-
-### **Performance Features**
-- **KVM Acceleration**: Hardware virtualization when available
-- **Host CPU Features**: Maximum performance optimization
-- **GTK Display**: Better graphics performance
-- **USB Input**: Enhanced mouse and keyboard support
-- **Error Logging**: Comprehensive debugging information
-
-### **Development Workflow**
-```bash
-# Daily development
-./dev_run.sh
-
-# Debugging
-./run_qemu_debug.sh
-# In another terminal:
-./debug_qemu.sh
-
-# Performance testing
-./run_qemu_optimized.sh
+**STATS Command:**
+```
+=== Enhanced IPC System Statistics ===
+Total queues created: 2
+Total messages sent: 2
+Total messages received: 0
+Total messages dropped: 0
+Total broadcasts: 1
+Active processes:
+  PID 0: 1 queues, 0 pending messages, Priority: 1
+  PID 1: 1 queues, 2 pending messages, Priority: 1
+=====================================
+>
 ```
 
-## 📋 **Build Requirements**
+## 🔧 **Technical Architecture**
 
-### **Toolchain**
-- **Cross-compiler**: `i386-elf-gcc`
-- **Assembler**: NASM
-- **Linker**: `i386-elf-ld`
-- **Debugger**: `i386-elf-gdb`
+### **Kernel Components**
+- **Process Manager**: Multi-process scheduling and management
+- **Memory Manager**: Allocation tracking and statistics
+- **IPC System**: Message passing between processes
+- **Interrupt Handler**: Timer and keyboard interrupt management
+- **System Calls**: Kernel interface for user processes
 
-### **Dependencies**
-- **QEMU**: For emulation and testing
-- **Make**: For build automation
-- **Bash**: For run scripts
+### **Hardware Support**
+- **x86 Architecture**: 32-bit protected mode
+- **Memory Protection**: MPU simulation and segment protection
+- **Interrupt Handling**: PIC and timer interrupts
+- **I/O Drivers**: Screen, keyboard, and timer drivers
 
-## 🔍 **Testing**
+### **Development Features**
+- **Incremental Development**: Step-by-step command addition
+- **Build System**: Clean compilation with size monitoring
+- **Testing Framework**: QEMU-based testing environment
+- **Documentation**: Comprehensive system documentation
 
-### **Comprehensive Test Suite**
-```bash
-./test_current_system_comprehensive.sh  # Full system test
-./test_phase2_day7.sh                  # MPU simulation test
-./test_phase2_day8.sh                  # Segment protection test
-./test_phase2_day9.sh                  # User/kernel separation test
-```
+## 📈 **Performance Metrics**
 
-### **Test Results**
-- **Phase 1**: 15/15 tests passed ✅
-- **Phase 2 Day 1-6**: 15/15 tests passed ✅
-- **Phase 2 Day 7**: 15/15 tests passed ✅
-- **Phase 2 Day 8**: 15/15 tests passed ✅
-- **Phase 2 Day 9**: 15/15 tests passed ✅
+### **System Size**
+- **Current Size**: ~26,000 bytes
+- **Growth**: Minimal (compiler optimization)
+- **Efficiency**: High (zero size impact for most additions)
+
+### **Memory Usage**
+- **Test Allocations**: 3 allocations (1024, 2048, 512 bytes)
+- **Total Allocated**: 3584 bytes
+- **Tracking**: Real-time allocation statistics
+
+### **IPC Activity**
+- **Queues Created**: 2 test queues
+- **Messages Sent**: 2 test messages
+- **Broadcasts**: 1 test broadcast
+- **Process Activity**: 3 processes (kernel + 2 user)
+
+## 🧪 **Testing**
+
+### **Build Testing**
+- **Compilation**: No errors or warnings
+- **Linking**: Successful binary generation
+- **Size Impact**: Minimal (compiler optimization)
+
+### **QEMU Testing**
+- **Boot Process**: System loads successfully
+- **Keyboard Input**: Functional command input
+- **Command Execution**: All commands work correctly
+- **Data Display**: Shows real system data
+
+## 🚀 **Development Status**
+
+### **✅ Completed Features**
+- **Process Management**: Multi-process support with user/kernel modes
+- **Memory Management**: Allocation tracking with statistics
+- **IPC System**: Message passing with comprehensive statistics
+- **Command Interface**: Professional command-line interface
+- **Real-time Monitoring**: Commands show actual system state
+
+### **🔄 Current Development**
+- **Incremental Command Addition**: Step-by-step command development
+- **System Enhancement**: Continuous improvement of existing features
+- **Testing and Validation**: Comprehensive QEMU-based testing
+
+### **📋 Planned Features**
+- **PROCESSES Command**: Display all active processes
+- **CLEAR Command**: Clear the screen
+- **TIME Command**: Show system uptime
+- **VERSION Command**: Show OS version information
 
 ## 📚 **Documentation**
 
-### **Current Status**
-- [CURRENT_SYSTEM_STATUS.md](CURRENT_SYSTEM_STATUS.md) - Complete system overview
-- [PHASE2_DAY7-9_COMPLETE.md](PHASE2_DAY7-9_COMPLETE.md) - Phase 2 completion details
-- [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) - What still needs implementation
+### **System Documentation**
+- `CURRENT_SYSTEM_STATUS.md` - Comprehensive system status
+- `MEMORY_STATS_CORRECTIONS.md` - Command corrections and fixes
+- `FIRST_INCREMENT_RESULTS.md` - Development progress tracking
 
-### **Development Guides**
-- [QEMU_OPTIMIZATION_GUIDE.md](QEMU_OPTIMIZATION_GUIDE.md) - Optimized QEMU setup
-- [MICROKERNEL_MIGRATION_PLAN.md](MICROKERNEL_MIGRATION_PLAN.md) - Complete migration plan
+### **Technical Documentation**
+- **Memory Management**: `libc/mem.c` and `libc/mem.h`
+- **IPC System**: `kernel/ipc.c` and `kernel/ipc.h`
+- **Process Management**: `kernel/process.c` and `kernel/process.h`
+- **Kernel Interface**: `kernel/kernel.c`
 
-### **Test Results**
-- [TEST_RESULTS_SUMMARY.md](TEST_RESULTS_SUMMARY.md) - Comprehensive test results
-- [PHASE2_DAY5-6_COMPLETE.md](PHASE2_DAY5-6_COMPLETE.md) - Phase 2 completion
+## 🎯 **Architecture Goals**
 
-## 🎯 **Next Steps**
+### **Microkernel Design**
+- **Minimal Kernel**: Core functionality in kernel space
+- **User Space Services**: Drivers and services in user space
+- **Process Isolation**: Complete separation between processes
+- **System Stability**: Robust error handling and recovery
 
-### **Immediate Priority**: Phase 3 - IPC Implementation
-1. **Create IPC structures** (`kernel/ipc.h`)
-2. **Implement message queues** (`kernel/ipc.c`)
-3. **Add IPC system calls** to syscall interface
-4. **Test IPC communication** between processes
-5. **Integrate with process management**
+### **Development Efficiency**
+- **Incremental Development**: Step-by-step feature addition
+- **Testing Framework**: QEMU-based testing environment
+- **Documentation**: Comprehensive system documentation
+- **Build System**: Clean, efficient compilation
 
-### **Development Environment**
-- ✅ **Optimized QEMU setup** ready for development
-- ✅ **Fast development cycles** with `./dev_run.sh`
-- ✅ **Comprehensive debugging** with GDB integration
-- ✅ **Performance optimization** with KVM acceleration
+## 📊 **System Status**
 
-## 🟢 **System Status: EXCELLENT**
+**Status**: ✅ **Stable with Enhanced Commands**
+**Build**: ✅ **Clean and Working**
+**Testing**: ✅ **QEMU Ready**
+**Documentation**: ✅ **Comprehensive and Up-to-Date**
+**Development**: ✅ **Ready for Next Increment**
 
-### **Stability**: 🟢 EXCELLENT
-- All components working together seamlessly
-- No memory leaks or conflicts
-- Comprehensive error handling
-- Stable process management
+**The system is stable, well-documented, and ready for continued development!** 🚀
 
-### **Functionality**: 🟢 EXCELLENT
-- Enhanced memory protection fully implemented
-- Process isolation working correctly
-- User/kernel mode separation operational
-- System call interface functional
+## 🤝 **Contributing**
 
-### **Performance**: 🟢 EXCELLENT
-- KVM acceleration for fast execution
-- Optimized QEMU configuration
-- Efficient memory access patterns
-- Minimal resource usage
+This is an educational operating system project. The system is designed for learning and experimentation with microkernel architecture, process management, and system programming concepts.
 
-### **Readiness**: 🟢 EXCELLENT
-- Ready for Phase 3: Inter-Process Communication (IPC)
-- Solid foundation for microkernel architecture
-- All critical systems operational
-- Comprehensive testing completed
+## 📄 **License**
 
-## 🚀 **Ready for Development**
-
-The WISP-BB microkernel migration provides:
-- ✅ **Comprehensive memory protection** with MPU simulation
-- ✅ **Process isolation** and privilege enforcement
-- ✅ **Optimized development environment** with QEMU
-- ✅ **Fast development cycles** with automated build and run
-- ✅ **Comprehensive debugging** with GDB integration
-
-**Start developing with**: `./dev_run.sh` 🎯
+This project is for educational purposes. Feel free to use, modify, and learn from the code.
